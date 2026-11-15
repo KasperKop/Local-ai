@@ -1,1 +1,59 @@
-# Local
+# Anestesiahelppi Local AI
+
+Erillinen kokeilu: voisiko Anestesiahelpin avustaja tiivistää annettua tekstiä käyttäjän omalla puhelimella ilman maksullista tekoälyrajapintaa? Nykyistä Anestesiahelppiä ei muuteta tässä projektissa.
+
+## Ensimmäinen versio
+
+- WebLLM ja WebGPU selaimessa; laskenta Web Workerissa.
+- Qwen 2.5 0,5B ensimmäiseen laitetestiin; 1,5B vertailuun. Pieni malli ei ole oletus laadukkaasta suomenkielisestä avustajasta.
+- Käyttäjä liittää lyhyen lähdeotteen; jokainen kysymys käsitellään erikseen.
+- Latauksen eteneminen, vastauksen suoratoisto, keskeytys, kopiointi ja ajoitus.
+- Ei API-avainta, pilvivarajärjestelmää, analytiikkaa eikä potilastietoja.
+
+## Käynnistys
+
+Node.js 22.12+ tai 24:
+
+```sh
+npm install
+npm test
+npm run dev
+```
+
+Julkaisupaketti: `npm run build`. Hakemisto `dist` voidaan julkaista staattisena HTTPS-sivustona. iPhonella avaa HTTPS-osoite Safarissa; tietokoneen localhost toimii kehityksessä, puhelimen HTTP-LAN-osoite ei riitä WebGPU:lle. Sivua ei voi käynnistää avaamalla index.html tiedostona.
+
+## iPhone-testi
+
+1. Avaa sivu päivitetyssä Safarissa ja pidä sivu etualalla.
+2. Valitse 0,5B ja käynnistä Wi-Fissä. Lataus voi olla satoja megatavuja; laite tarvitsee lisäksi huomattavasti käyttömuistia.
+3. Täytä tekninen testiesimerkki ja kysy listan sijainnista.
+4. Kysy sitten harjoituksen kestoa. Oikea toiminta: mallin pitäisi kertoa, ettei tietoa ole lähteessä.
+5. Kokeile lähteeseen lisättyä ristiriitaista käskyä. Pelkkä järjestelmäohje ei takaa lähteissä pysymistä.
+6. Vertaa 1,5B-malliin vapauttamalla ensin nykyinen malli muistista.
+7. Kirjaa laite/iOS, malli, ensimmäisen tekstin aika, kokonaisaika, suomen laatu, lähteen ulkopuoliset väitteet ja lämpeneminen.
+
+Safari 26 toi WebGPU-tuen, mutta se ei takaa tämän mallin toimivuutta jokaisella laitteella. Aidon iPhonen suorituskyky ja vastausten laatu ovat vielä testaamatta.
+
+## Tietovirta ja rajat
+
+Sivun lataus ottaa yhteyden sivuston palvelimeen. WebLLM lataa mallin ja ajotiedostot ulkoisilta palvelimilta (mm. Hugging Face ja MLC:n GitHub). Palvelimet näkevät tavalliset latauspyynnöt. Oma sovelluskoodi ei lähetä lähdetekstiä tai kysymystä palvelimelle. Mallitiedostoja voidaan välimuistittaa; selain voi myös poistaa ne. Tekstejä ei tallenneta pysyvästi. Offline-käynnistystä ei tässä versiossa taata eikä service workeria ole.
+
+Ei verkkolähdehakua tai lääketieteellistä aineistoa mukana. Ei kliiniseen käyttöön. Generoitu vastaus voi olla virheellinen. Testit tarkistavat syötteen käsittelyä, eivät mallin luotettavuutta.
+
+## Lähteet ja lisenssit
+
+- https://webllm.mlc.ai/docs/user/basic_usage.html
+- https://github.com/mlc-ai/web-llm (Apache-2.0)
+- https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct
+- https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct
+- https://webkit.org/blog/17333/webkit-features-in-safari-26-0/
+
+Mallien omat lisenssit ja ehdot koskevat ladattuja mallipainoja. Mallipainoja ei sisällytetä tähän repoon.
+
+## Tarkistus 15.11.2026
+
+- Syötteenkäsittelyn testit: 3/3 läpi.
+- Vite-tuotantokäännös onnistui; WebLLM aiheuttaa suuren JavaScript-paketin varoituksen.
+- Selain: sivu avautui, testiesimerkki täyttyi, lähetys pysyi estettynä ilman mallia.
+- Testiselaimesta ei saatu WebGPU-laitetta. Selkeä virheviesti näkyi ja uudelleenyritys jäi mahdolliseksi.
+- Mallin latausta, generointia, keskeytystä, vastausten laatua tai iPhone-asettelua ei vielä vahvistettu toimivaksi.
