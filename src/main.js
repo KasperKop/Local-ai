@@ -1,5 +1,5 @@
 import { CreateWebWorkerMLCEngine } from '@mlc-ai/web-llm';
-import { buildMessages } from './prompt.js';
+import { buildMessages, PROMPT_VERSION } from './prompt.js';
 const $ = (id) => document.getElementById(id);
 let engine, worker, busy = false, stopped = false;
 function controls() {
@@ -34,13 +34,15 @@ $('unload').onclick = async () => {
 };
 $('example').onclick = () => {
   $('source').value = 'Tämä on keksitty tekninen testiohje, ei hoito-ohje. Harjoitustilassa on kolme sinistä laatikkoa. Tarkistuslista säilytetään ylimmässä laatikossa. Harjoituksen jälkeen lista palautetaan samaan paikkaan. Ohje ei kerro harjoituksen kestoa.';
-  $('question').value = 'Missä tarkistuslista on ja mitä sille tehdään harjoituksen jälkeen?'; controls();
+  $('question').value = 'Missä tarkistuslista säilytetään?'; controls();
 };
 $('form').onsubmit = async (event) => {
   event.preventDefault(); if (busy || !engine) return;
   let messages;
   try { messages = buildMessages($('source').value, $('question').value); }
   catch(e) { $('metrics').textContent = e.message; return; }
+  $('request').textContent = messages.map((message) => message.role.toUpperCase() + '\n' + message.content).join('\n\n');
+  $('request-info').textContent = `Ohje ${PROMPT_VERSION} · ${$('model').value} · lähde ${$('source').value.trim().length} merkkiä`;
   busy = true; stopped = false; controls(); $('stop').disabled = false; $('copy').disabled = true;
   $('answer').textContent = ''; $('metrics').textContent = 'Muodostetaan vastausta…';
   const start = performance.now(); let first = null, tokens = null;
