@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "test": "node --test src/prompt.test.js"
+    "test": "node --test src/*.test.js"
   },
   "keywords": [],
   "author": "",

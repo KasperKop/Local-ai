@@ -1,7 +1,19 @@
 import { CreateWebWorkerMLCEngine } from '@mlc-ai/web-llm';
 import { buildMessages, PROMPT_VERSION } from './prompt.js';
+import { restoreModel, saveModel } from './model-preference.js';
 const $ = (id) => document.getElementById(id);
-let engine, worker, busy = false, stopped = false;
+let engine, worker, busy = false, stopped = false, activeModel = null;
+const allowedModels = Array.from($('model').options, option => option.value);
+const restored = restoreModel(allowedModels, $('model').value);
+$('model').value = restored.model;
+const selectionNotice = (available) => {
+  $('model-preference').textContent = available
+    ? 'Mallivalinta muistetaan tällä selaimella. Sivun päivityksen jälkeen käynnistä valittu malli uudelleen.'
+    : 'Selain ei salli mallivalinnan tallentamista. Tarkista malli aina sivun päivityksen jälkeen.';
+};
+selectionNotice(restored.available);
+$('model').onchange = () => selectionNotice(saveModel($('model').value, allowedModels));
+
 function controls() {
   $('load').disabled = busy || !!engine;
   $('model').disabled = busy || !!engine;
@@ -13,6 +25,8 @@ function controls() {
 }
 $('source').oninput = $('question').oninput = controls;
 $('load').onclick = async () => {
+  const requestedModel = {id: $('model').value, label: $('model').selectedOptions[0].textContent};
+  selectionNotice(saveModel(requestedModel.id, allowedModels));
   busy = true; controls(); $('status').textContent = 'Tarkistetaan laitetta…';
   try {
     if (!window.isSecureContext || !navigator.gpu) throw new Error('Selain tarvitsee HTTPS-yhteyden ja WebGPU-tuen. Kokeile päivitettyä Safaria.');
@@ -20,29 +34,32 @@ $('load').onclick = async () => {
     if (!adapter) throw new Error('WebGPU-laitetta ei saatu käyttöön.');
     if (!adapter.features.has('shader-f16')) throw new Error('Valitut mallit tarvitsevat shader-f16-tuen, jota tämä laite ei ilmoita.');
     worker = new Worker(new URL('./worker.js', import.meta.url), {type: 'module'});
-    engine = await CreateWebWorkerMLCEngine(worker, $('model').value, {
+    engine = await CreateWebWorkerMLCEngine(worker, requestedModel.id, {
       initProgressCallback: (p) => { $('progress').value = p.progress; $('status').textContent = p.text; }
     }, {context_window_size: 4096});
-    $('status').textContent = 'Malli valmis. Vastaukset tuotetaan tällä laitteella.';
-  } catch (e) { worker?.terminate(); worker = null; engine = null; $('status').textContent = 'Käynnistys epäonnistui: ' + e.message; }
+    activeModel = requestedModel;
+    $('status').textContent = `Malli valmis: ${activeModel.label}. Vastaukset tuotetaan tällä laitteella.`;
+  } catch (e) { worker?.terminate(); worker = null; engine = null; activeModel = null; $('status').textContent = 'Käynnistys epäonnistui: ' + e.message; }
   finally { busy = false; controls(); }
 };
 $('unload').onclick = async () => {
   busy = true; controls();
   try { await engine.unload(); }
-  finally {worker?.terminate(); worker = null; engine = null; busy = false; $('status').textContent = 'Malli vapautettu muistista. Välimuistitiedostot voivat jäädä selaimeen.'; controls();}
+  finally {worker?.terminate(); worker = null; engine = null; activeModel = null; busy = false; $('status').textContent = 'Malli vapautettu muistista. Välimuistitiedostot voivat jäädä selaimeen.'; controls();}
 };
 $('example').onclick = () => {
   $('source').value = 'Tämä on keksitty tekninen testiohje, ei hoito-ohje. Harjoitustilassa on kolme sinistä laatikkoa. Tarkistuslista säilytetään ylimmässä laatikossa. Harjoituksen jälkeen lista palautetaan samaan paikkaan. Ohje ei kerro harjoituksen kestoa.';
   $('question').value = 'Missä tarkistuslista säilytetään?'; controls();
 };
 $('form').onsubmit = async (event) => {
-  event.preventDefault(); if (busy || !engine) return;
+  event.preventDefault(); if (busy || !engine || !activeModel) return;
+  const responseModel = {...activeModel};
   let messages;
   try { messages = buildMessages($('source').value, $('question').value); }
   catch(e) { $('metrics').textContent = e.message; return; }
   $('request').textContent = messages.map((message) => message.role.toUpperCase() + '\n' + message.content).join('\n\n');
-  $('request-info').textContent = `Ohje ${PROMPT_VERSION} · ${$('model').value} · lähde ${$('source').value.trim().length} merkkiä`;
+  $('request-info').textContent = `Ohje ${PROMPT_VERSION} · ${responseModel.id} · lähde ${$('source').value.trim().length} merkkiä`;
+  $('response-model').textContent = `Vastauksen malli: ${responseModel.label}`;
   busy = true; stopped = false; controls(); $('stop').disabled = false; $('copy').disabled = true;
   $('answer').textContent = ''; $('metrics').textContent = 'Muodostetaan vastausta…';
   const start = performance.now(); let first = null, tokens = null, finishReason = null, output = '';
