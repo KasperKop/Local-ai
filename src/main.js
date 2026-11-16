@@ -45,20 +45,33 @@ $('form').onsubmit = async (event) => {
   $('request-info').textContent = `Ohje ${PROMPT_VERSION} · ${$('model').value} · lähde ${$('source').value.trim().length} merkkiä`;
   busy = true; stopped = false; controls(); $('stop').disabled = false; $('copy').disabled = true;
   $('answer').textContent = ''; $('metrics').textContent = 'Muodostetaan vastausta…';
-  const start = performance.now(); let first = null, tokens = null;
+  const start = performance.now(); let first = null, tokens = null, finishReason = null, output = '';
+  const pendingNotice = setTimeout(() => {
+    if (first === null) $('metrics').textContent = 'Vastausta odotetaan edelleen. Voit keskeyttää ja yrittää uudelleen.';
+  }, 20000);
   try {
     const chunks = await engine.chat.completions.create({messages, temperature: 0, max_tokens: 256, stream: true, stream_options: {include_usage: true}});
     for await (const chunk of chunks) {
       const text = chunk.choices[0]?.delta.content || '';
+      if (chunk.choices[0]?.finish_reason) finishReason = chunk.choices[0].finish_reason;
       if(text && first === null) first = performance.now();
-      $('answer').textContent += text;
+      output += text;
+      $('answer').textContent = output;
       if(chunk.usage) tokens = chunk.usage.completion_tokens;
     }
     const seconds = ((performance.now() - start)/1000).toFixed(1);
     $('metrics').textContent = `${stopped ? 'Keskeytetty' : 'Valmis'} · ${seconds} s · ensimmäinen teksti ${first === null ? '—' : ((first-start)/1000).toFixed(1) + ' s'}${tokens === null ? '' : ' · ' + tokens + ' tokenia'}`;
-    if(!stopped && tokens >= 256) $('metrics').textContent += ' · vastaus voi olla katkennut pituusrajaan';
-  } catch(e) { $('metrics').textContent = 'Vastaus epäonnistui: ' + e.message; }
-  finally {busy = false; $('stop').disabled = true; $('copy').disabled = !$('answer').textContent; controls();}
+    if (!output.trim()) {
+      $('answer').textContent = stopped
+        ? 'Sovelluksen ilmoitus: vastaus keskeytettiin ennen tekstin valmistumista.'
+        : 'Sovelluksen ilmoitus: malli ei tuottanut vastaustekstiä. Tämä ei tarkoita, ettei lähteessä olisi vastausta. Yritä uudelleen tai kokeile vertailumallia.';
+      $('metrics').textContent = `${stopped ? 'Keskeytetty' : 'Tyhjä vastaus'} · ${seconds} s · lopetussyy: ${finishReason || 'ei ilmoitettu'}${tokens === null ? '' : ' · ' + tokens + ' tokenia'}`;
+    }
+    if(!stopped && (tokens >= 256 || finishReason === 'length')) $('metrics').textContent += ' · vastaus voi olla katkennut pituusrajaan';
+  } catch(e) { $('metrics').textContent = 'Vastaus epäonnistui: ' + e.message;
+    if (!output.trim()) $('answer').textContent = 'Sovelluksen ilmoitus: vastauksen muodostaminen epäonnistui. Yritä uudelleen.';
+  }
+  finally {clearTimeout(pendingNotice); busy = false; $('stop').disabled = true; $('copy').disabled = !output.trim(); controls();}
 };
 $('stop').onclick = () => {stopped = true; engine?.interruptGenerate(); $('stop').disabled = true;};
 $('copy').onclick = async () => {
