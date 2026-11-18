@@ -1,20 +1,10 @@
 import { CreateWebWorkerMLCEngine } from '@mlc-ai/web-llm';
 import { buildMessages, PROMPT_VERSION } from './prompt.js';
-import { restoreModel, saveModel } from './model-preference.js';
 import samples from './samples.json';
 import {retrieve,resolveQuote,quoteMessages} from './search.js';
 const $ = (id) => document.getElementById(id);
 let engine, worker, busy = false, stopped = false, activeModel = null;
-const allowedModels = Array.from($('model').options, option => option.value);
-const restored = restoreModel(allowedModels, $('model').value);
-$('model').value = restored.model;
-const selectionNotice = (available) => {
-  $('model-preference').textContent = available
-    ? 'Mallivalinta muistetaan tällä selaimella. Sivun päivityksen jälkeen käynnistä valittu malli uudelleen.'
-    : 'Selain ei salli mallivalinnan tallentamista. Tarkista malli aina sivun päivityksen jälkeen.';
-};
-selectionNotice(restored.available);
-$('model').onchange = () => selectionNotice(saveModel($('model').value, allowedModels));
+const requestedModel = {id:'Qwen3-4B-q4f16_1-MLC', label:'Qwen3-4B'};
 
 $('source').value=samples.Lapset;
 $('sample').onchange=()=>{$('source').value=samples[$('sample').value] || ''; reset();};
@@ -29,7 +19,6 @@ function controls() {
   for(const id of ['mode','sample']) $(id).disabled=busy;
   $('inspect').disabled=busy || !$('source').value.trim() || !$('question').value.trim();
   $('load').disabled = busy || !!engine;
-  $('model').disabled = busy || !!engine;
   $('unload').disabled = busy || !engine;
   $('send').disabled = busy || !engine || !$('source').value.trim() || !$('question').value.trim();
   $('source').disabled = busy;
@@ -40,14 +29,12 @@ $('source').oninput=()=>{$('sample').value='';reset();};
 $('question').oninput=reset;
 $('mode').onchange=reset;
 $('load').onclick = async () => {
-  const requestedModel = {id: $('model').value, label: $('model').selectedOptions[0].textContent};
-  selectionNotice(saveModel(requestedModel.id, allowedModels));
   busy = true; controls(); $('status').textContent = 'Tarkistetaan laitetta…';
   try {
     if (!window.isSecureContext || !navigator.gpu) throw new Error('Selain tarvitsee HTTPS-yhteyden ja WebGPU-tuen. Kokeile päivitettyä Safaria.');
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) throw new Error('WebGPU-laitetta ei saatu käyttöön.');
-    if (!adapter.features.has('shader-f16')) throw new Error('Valitut mallit tarvitsevat shader-f16-tuen, jota tämä laite ei ilmoita.');
+    if (!adapter.features.has('shader-f16')) throw new Error('Qwen3-4B tarvitsee shader-f16-tuen, jota tämä laite ei ilmoita.');
     worker = new Worker(new URL('./worker.js', import.meta.url), {type: 'module'});
     engine = await CreateWebWorkerMLCEngine(worker, requestedModel.id, {
       initProgressCallback: (p) => { $('progress').value = p.progress; $('status').textContent = p.text; }
@@ -88,12 +75,14 @@ $('form').onsubmit = async (event) => {
     if (first === null) $('metrics').textContent = 'Vastausta odotetaan edelleen. Voit keskeyttää ja yrittää uudelleen.';
   }, 20000);
   try {
-    const chunks = await engine.chat.completions.create({messages, temperature: 0, max_tokens: mode==='quote'?16:256, stream: true, stream_options: {include_usage: true}});
+    const chunks = await engine.chat.completions.create({messages, extra_body: {enable_thinking:false}, temperature: 0, max_tokens: mode==='quote'?16:256, stream: true, stream_options: {include_usage: true}});
     for await (const chunk of chunks) {
       const text = chunk.choices[0]?.delta.content || '';
       if (chunk.choices[0]?.finish_reason) finishReason = chunk.choices[0].finish_reason;
       if(text && first === null) first = performance.now();
       output += text;
+      // WebLLM can stream its prefilled empty reasoning header.
+      output = output.replace(/^\s*<think>\s*<\/think>\s*/, '');
       if(mode!=='quote') $('answer').textContent = output;
       if(chunk.usage) tokens = chunk.usage.completion_tokens;
     }
@@ -106,7 +95,7 @@ $('form').onsubmit = async (event) => {
     } else if (!output.trim()) {
       $('answer').textContent = stopped
         ? 'Sovelluksen ilmoitus: vastaus keskeytettiin ennen tekstin valmistumista.'
-        : 'Sovelluksen ilmoitus: malli ei tuottanut vastaustekstiä. Tämä ei tarkoita, ettei lähteessä olisi vastausta. Yritä uudelleen tai kokeile vertailumallia.';
+        : 'Sovelluksen ilmoitus: malli ei tuottanut vastaustekstiä. Tämä ei tarkoita, ettei lähteessä olisi vastausta. Yritä uudelleen.';
       $('metrics').textContent = `${stopped ? 'Keskeytetty' : 'Tyhjä vastaus'} · ${seconds} s · lopetussyy: ${finishReason || 'ei ilmoitettu'}${tokens === null ? '' : ' · ' + tokens + ' tokenia'}`;
     }
     if(!stopped && (tokens >= 256 || finishReason === 'length')) $('metrics').textContent += ' · vastaus voi olla katkennut pituusrajaan';
