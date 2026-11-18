@@ -2,10 +2,10 @@
 
 Erillinen kokeilu: voisiko Anestesiahelpin avustaja tiivistää annettua tekstiä käyttäjän omalla puhelimella ilman maksullista tekoälyrajapintaa? Nykyistä Anestesiahelppiä ei muuteta tässä projektissa.
 
-## Nykyinen kokeilu (0.3.1)
+## Nykyinen kokeilu (0.4.0)
 
 - WebLLM ja WebGPU selaimessa; laskenta Web Workerissa.
-- Ainoa malli on Qwen3-1.7B (q4f16_1). Pitkä päättely on pois käytöstä jokaisessa kyselyssä.
+- Aluksi käytössä on Qwen3-1.7B (q4f16_1). Pitkä päättely on pois käytöstä jokaisessa kyselyssä.
 - Käyttäjä liittää lyhyen lähdeotteen; jokainen kysymys käsitellään erikseen.
 - Latauksen eteneminen, vastauksen suoratoisto, keskeytys, kopiointi ja ajoitus.
 - Ei API-avainta, pilvivarajärjestelmää, analytiikkaa eikä potilastietoja.
@@ -61,6 +61,8 @@ Mallien omat lisenssit ja ehdot koskevat ladattuja mallipainoja. Mallipainoja ei
 
 Valitse yksi ikäryhmä tai liitä korkeintaan 100 000 merkin oma aineisto. Erottele asiakohdat tyhjällä rivillä ja pidä asiayhteys (esimerkiksi ikäryhmä) otteessa. Mukana on 46 tekstiotetta Anestesiahelpin tiedoston `src/resuscitation/guides.json` aloitus- ja osioteksteistä. Ne ovat aineistonäyte, eivät kokonaisia ohjeita.
 
-Kokeile ensin pelkkää lähdehakua: tämä ei lataa mallia. Sanahaku järjestää enintään kolme otetta. Se ei ymmärrä kaikkia synonyymeja eikä varmista, että kysymykseen voi vastata. Suoran lainauksen tilassa malli palauttaa otteen tunnuksen ja sovellus näyttää vain alkuperäisen tekstin. Virheellinen tunnus ei tuota vastausta. Vapaassa vertailutilassa malli kirjoittaa vastauksen itse ja voi keksiä lukuja. Koko tekstin vertailu on rajattu 3000 merkkiin.
+Kokeile ensin pelkkää lähdehakua: tämä ei lataa mallia. Sanahaku järjestää enintään kaksi korkeintaan 600 merkin otetta. Se ei ymmärrä kaikkia synonyymeja eikä varmista, että kysymykseen voi vastata. Suoran lainauksen tilassa malli palauttaa otteen tunnuksen ja sovellus näyttää vain alkuperäisen tekstin. Virheellinen tunnus ei tuota vastausta. Vapaassa vertailutilassa malli kirjoittaa vastauksen itse ja voi keksiä lukuja. Koko tekstin vertailu on rajattu 600 merkkiin.
 
 **Toistettava puhelinkoe:** käytä ensin Lapset-aineistoa. Kysy “paco tavoite mmhg”, “Mikä on systolisen verenpaineen tarkka tavoite mmHg?” ja “Kuinka kauan harjoitus kestää?”. Tarkista erikseen (1) löytyykö oikea ote, (2) vastaako valittu ote kysymykseen ja (3) lisääkö vapaa vastaus lähteettömiä lukuja. Verenpaineotteessa ei ole numeerista tavoitetta. Viimeiseen kysymykseen aineistossa ei ole vastausta. Vaihda vertailutapaa muuttamatta kysymystä tai aineistoa. Kirjaa myös malli, puhelin, selain, viive ja mahdollinen sivun uudelleenlataus. Toista sitten omalla pidemmällä aineistolla sekä lyhenteillä ja kysymyksillä, joihin lähteessä ei ole vastausta. Otteiden hakutestit eivät mittaa mallin vastauslaatua.
+
+Mobiilikokeen konteksti on 1024 ja vastauksen raja 150 tokenia. Kesken generoinnin uudelleen avautunut välilehti valitsee saman istunnon seuraaviin ajoihin Qwen3-0.6B:n. Malli ladataan käsin. Generointimerkintä ei todista muistin loppumista. pagehide kirjataan vain jos selain toimittaa tapahtuman.

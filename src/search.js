@@ -5,8 +5,8 @@ export function passages(text) {
   if (text.length>100000) throw Error('Aineiston raja on 100 000 merkkiä.');
   // Split long pasted paragraphs at whitespace; never pass fragments as full quotations.
   const blocks=text.trim().split(/\n\s*\n/g).filter(Boolean);
-  const rows=blocks.flatMap(b=>b.length<=850?[b]:b.split(/(?<=[.!?])\s+(?=[\p{Lu}])/u)).map((text,i)=>({id:i+1,text}));
-  if(rows.some(r=>r.text.length>850)) throw Error("Jaa pitkät lähdekohdat alle 850 merkin kappaleiksi. Mitään osaa ei haettu.");
+  const rows=blocks.flatMap(b=>b.length<=600?[b]:b.split(/(?<=[.!?])\s+(?=[\p{Lu}])/u)).map((text,i)=>({id:i+1,text}));
+  if(rows.some(r=>r.text.length>600)) throw Error("Jaa pitkät lähdekohdat alle 600 merkin kappaleiksi. Mitään osaa ei haettu.");
   return rows;
 }
 export function retrieve(text,question) {
@@ -15,7 +15,7 @@ export function retrieve(text,question) {
   const words=entries.map(e=>terms(e.text));
   const weights=q.map(t=>(['mmhg','kpa','min','mg'].includes(t)?0.12:1)*Math.log(1+entries.length/(1+words.filter(ws=>matches(t,ws)).length)));
   return entries.map((e,i)=>({...e,score:q.reduce((n,t,j)=>n+(matches(t,words[i])?weights[j]:0),0)}))
-    .filter(e=>e.score>0 && e.text.length<=850).sort((a,b)=>b.score-a.score||a.id-b.id).slice(0,3);
+    .filter(e=>e.score>0 && e.text.length<=600).sort((a,b)=>b.score-a.score||a.id-b.id).slice(0,2);
 }
 export function resolveQuote(raw,entries) {
   const id=raw.trim();
