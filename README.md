@@ -57,3 +57,11 @@ Mallien omat lisenssit ja ehdot koskevat ladattuja mallipainoja. Mallipainoja ei
 - Selain: sivu avautui, testiesimerkki täyttyi, lähetys pysyi estettynä ilman mallia.
 - Testiselaimesta ei saatu WebGPU-laitetta. Selkeä virheviesti näkyi ja uudelleenyritys jäi mahdolliseksi.
 - Mallin latausta, generointia, keskeytystä, vastausten laatua tai iPhone-asettelua ei vielä vahvistettu toimivaksi.
+
+## Lähdehaun mobiilikoe (0.2.0)
+
+Valitse yksi ikäryhmä tai liitä korkeintaan 100 000 merkin oma aineisto. Erottele asiakohdat tyhjällä rivillä ja pidä asiayhteys (esimerkiksi ikäryhmä) otteessa. Mukana on 46 tekstiotetta Anestesiahelpin tiedoston `src/resuscitation/guides.json` aloitus- ja osioteksteistä. Ne ovat aineistonäyte, eivät kokonaisia ohjeita.
+
+Kokeile ensin pelkkää lähdehakua: tämä ei lataa mallia. Sanahaku järjestää enintään kolme otetta. Se ei ymmärrä kaikkia synonyymeja eikä varmista, että kysymykseen voi vastata. Oletustilassa malli palauttaa otteen tunnuksen ja sovellus näyttää vain alkuperäisen tekstin. Virheellinen tunnus ei tuota vastausta. Vapaassa vertailutilassa malli kirjoittaa vastauksen itse ja voi keksiä lukuja. Koko tekstin vertailu on rajattu 3000 merkkiin.
+
+**Toistettava puhelinkoe:** käytä ensin Lapset-aineistoa. Kysy “paco tavoite mmhg”, “Mikä on systolisen verenpaineen tarkka tavoite mmHg?” ja “Kuinka kauan harjoitus kestää?”. Tarkista erikseen (1) löytyykö oikea ote, (2) vastaako valittu ote kysymykseen ja (3) lisääkö vapaa vastaus lähteettömiä lukuja. Verenpaineotteessa ei ole numeerista tavoitetta. Viimeiseen kysymykseen aineistossa ei ole vastausta. Vaihda vertailutapaa muuttamatta kysymystä tai aineistoa. Kirjaa myös malli, puhelin, selain, viive ja mahdollinen sivun uudelleenlataus. Toista sitten omalla pidemmällä aineistolla sekä lyhenteillä ja kysymyksillä, joihin lähteessä ei ole vastausta. Otteiden hakutestit eivät mittaa mallin vastauslaatua.
