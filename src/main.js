@@ -4,7 +4,7 @@ import samples from './samples.json';
 import {retrieve,resolveQuote,quoteMessages} from './search.js';
 const $ = (id) => document.getElementById(id);
 let engine, worker, busy = false, stopped = false, activeModel = null;
-const requestedModel = {id:'Qwen3-4B-q4f16_1-MLC', label:'Qwen3-4B'};
+const requestedModel = {id:'Qwen3-1.7B-q4f16_1-MLC', label:'Qwen3-1.7B'};
 
 $('source').value=samples.Lapset;
 $('sample').onchange=()=>{$('source').value=samples[$('sample').value] || ''; reset();};
@@ -34,7 +34,7 @@ $('load').onclick = async () => {
     if (!window.isSecureContext || !navigator.gpu) throw new Error('Selain tarvitsee HTTPS-yhteyden ja WebGPU-tuen. Kokeile päivitettyä Safaria.');
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) throw new Error('WebGPU-laitetta ei saatu käyttöön.');
-    if (!adapter.features.has('shader-f16')) throw new Error('Qwen3-4B tarvitsee shader-f16-tuen, jota tämä laite ei ilmoita.');
+    if (!adapter.features.has('shader-f16')) throw new Error('Qwen3-1.7B tarvitsee shader-f16-tuen, jota tämä laite ei ilmoita.');
     worker = new Worker(new URL('./worker.js', import.meta.url), {type: 'module'});
     engine = await CreateWebWorkerMLCEngine(worker, requestedModel.id, {
       initProgressCallback: (p) => { $('progress').value = p.progress; $('status').textContent = p.text; }

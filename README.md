@@ -2,10 +2,10 @@
 
 Erillinen kokeilu: voisiko Anestesiahelpin avustaja tiivistää annettua tekstiä käyttäjän omalla puhelimella ilman maksullista tekoälyrajapintaa? Nykyistä Anestesiahelppiä ei muuteta tässä projektissa.
 
-## Nykyinen kokeilu (0.3.0)
+## Nykyinen kokeilu (0.3.1)
 
 - WebLLM ja WebGPU selaimessa; laskenta Web Workerissa.
-- Ainoa malli on Qwen3-4B (q4f16_1). Pitkä päättely on pois käytöstä jokaisessa kyselyssä.
+- Ainoa malli on Qwen3-1.7B (q4f16_1). Pitkä päättely on pois käytöstä jokaisessa kyselyssä.
 - Käyttäjä liittää lyhyen lähdeotteen; jokainen kysymys käsitellään erikseen.
 - Latauksen eteneminen, vastauksen suoratoisto, keskeytys, kopiointi ja ajoitus.
 - Ei API-avainta, pilvivarajärjestelmää, analytiikkaa eikä potilastietoja.
@@ -25,7 +25,7 @@ Julkaisupaketti: `npm run build`. Hakemisto `dist` voidaan julkaista staattisena
 ## iPhone-testi
 
 1. Avaa sivu päivitetyssä Safarissa ja pidä sivu etualalla.
-2. Käynnistä Qwen3-4B Wi-Fissä. Lataus on useita gigatavuja; laite tarvitsee lisäksi huomattavasti käyttömuistia.
+2. Käynnistä Qwen3-1.7B Wi-Fissä. WebLLM arvioi mallin muistitarpeeksi noin 2,0 Gt. Latauksen koko on eri asia kuin käytönaikainen muisti.
 3. Täytä tekninen testiesimerkki ja kysy listan sijainnista.
 4. Kysy sitten harjoituksen kestoa. Oikea toiminta: mallin pitäisi kertoa, ettei tietoa ole lähteessä.
 5. Kokeile lähteeseen lisättyä ristiriitaista käskyä. Pelkkä järjestelmäohje ei takaa lähteissä pysymistä.
@@ -44,7 +44,7 @@ Haku toimii paikallisesti mukana tulevasta tai itse liitetystä aineistosta. Ei 
 
 - https://webllm.mlc.ai/docs/user/basic_usage.html
 - https://github.com/mlc-ai/web-llm (Apache-2.0)
-- https://huggingface.co/Qwen/Qwen3-4B (Apache-2.0)
+- https://huggingface.co/Qwen/Qwen3-1.7B (Apache-2.0)
 - https://webkit.org/blog/17333/webkit-features-in-safari-26-0/
 
 Mallien omat lisenssit ja ehdot koskevat ladattuja mallipainoja. Mallipainoja ei sisällytetä tähän repoon.
